@@ -5,6 +5,5 @@ __pycache__/
 venv/
 .venv/
 *.zip
-docs/take_screenshot.py
-docs/process_screenshots.py
+docs/*.py
 docs/*-raw.png

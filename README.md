@@ -13,9 +13,6 @@
 ### Dashboard — Idle
 ![Dashboard idle state](docs/screenshot-idle.png)
 
-### Dashboard — Downloading (8 parallel workers)
-![Dashboard actively downloading with live progress bar and terminal log](docs/screenshot-downloading.png)
-
 ---
 
 ## Features
