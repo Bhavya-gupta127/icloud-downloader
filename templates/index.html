@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iCloud Media Harvester</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #03060f;
+      --surface:   #07111f;
+      --cyan:      #00e5ff;
+      --blue:      #2979ff;
+      --green:     #00e676;
+      --pink:      #e040fb;
+      --amber:     #ffab40;
+      --red:       #ff1744;
+      --text:      #cce8ff;
+      --dim:       #3a5a7a;
+      --border:    rgba(0,229,255,.18);
+      --glow-sm:   0 0 8px rgba(0,229,255,.6);
+      --glow-md:   0 0 16px rgba(0,229,255,.5), 0 0 32px rgba(0,229,255,.25);
+      --glow-lg:   0 0 24px rgba(0,229,255,.7), 0 0 60px rgba(0,229,255,.3);
+    }
+
+    html { font-size: 15px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 400;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ─── Grid background ──────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Scanlines overlay ────────────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,.12) 3px,
+        rgba(0,0,0,.12) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ─── Layout ───────────────────────────────────────────────── */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ─── Header ───────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.2rem;
+      margin-bottom: 2.2rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      border: 2px solid var(--cyan);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: var(--glow-sm), inset 0 0 8px rgba(0,229,255,.15);
+      animation: pulse-border 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: var(--glow-sm), inset 0 0 8px rgba(0,229,255,.15); }
+      50%       { box-shadow: var(--glow-md), inset 0 0 14px rgba(0,229,255,.2); }
+    }
+
+    .logo-text h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--cyan);
+      text-shadow: var(--glow-sm);
+      text-transform: uppercase;
+    }
+
+    .logo-text p {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .68rem;
+      color: var(--dim);
+      letter-spacing: .15em;
+    }
+
+    .header-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .7rem;
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: .2rem .6rem;
+      border-radius: 3px;
+      letter-spacing: .12em;
+      box-shadow: 0 0 8px rgba(0,230,118,.35);
+      animation: blink-badge 2.5s step-end infinite;
+    }
+
+    @keyframes blink-badge {
+      0%, 90%, 100% { opacity: 1; }
+      95%           { opacity: .3; }
+    }
+
+    /* ─── Input section ────────────────────────────────────────── */
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .input-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .18em;
+      color: var(--cyan);
+      margin-bottom: .6rem;
+      display: block;
+    }
+
+    .input-row {
+      display: flex;
+      gap: .8rem;
+    }
+
+    .url-input {
+      flex: 1;
+      background: rgba(0,229,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .88rem;
+      padding: .7rem 1rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .url-input::placeholder { color: var(--dim); }
+
+    .url-input:focus {
+      border-color: var(--cyan);
+      box-shadow: var(--glow-sm), inset 0 0 10px rgba(0,229,255,.06);
+    }
+
+    .btn-start {
+      background: transparent;
+      border: 2px solid var(--cyan);
+      border-radius: 6px;
+      color: var(--cyan);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      padding: .68rem 1.6rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background .2s, box-shadow .2s, color .2s;
+      white-space: nowrap;
+    }
+
+    .btn-start:hover:not(:disabled) {
+      background: rgba(0,229,255,.1);
+      box-shadow: var(--glow-md);
+    }
+
+    .btn-start:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .input-hint {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .66rem;
+      color: var(--dim);
+      margin-top: .5rem;
+      letter-spacing: .08em;
+    }
+
+    /* ─── Stats grid ───────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.8rem;
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, box-shadow .3s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--cyan);
+      opacity: .5;
+      transition: opacity .3s;
+    }
+
+    .stat-card.active::before { opacity: 1; }
+
+    .stat-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .18em;
+      color: var(--dim);
+      margin-bottom: .4rem;
+    }
+
+    .stat-value {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--cyan);
+      line-height: 1;
+      text-shadow: var(--glow-sm);
+      transition: color .3s;
+    }
+
+    .stat-card[data-type="videos"] .stat-value  { color: var(--blue); text-shadow: 0 0 8px rgba(41,121,255,.7); }
+    .stat-card[data-type="status"] .stat-value  { font-size: 1.1rem; letter-spacing: .05em; }
+    .stat-card[data-type="size"]   .stat-value  { color: var(--green); text-shadow: 0 0 8px rgba(0,230,118,.7); }
+
+    /* ─── Progress section ─────────────────────────────────────── */
+    .progress-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: .8rem;
+    }
+
+    .progress-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .18em;
+      color: var(--cyan);
+    }
+
+    .progress-pct {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: var(--glow-sm);
+    }
+
+    .progress-track {
+      height: 8px;
+      background: rgba(0,229,255,.08);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      border-radius: 4px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      position: relative;
+      box-shadow: 0 0 12px rgba(0,229,255,.6);
+    }
+
+    /* Flowing shimmer on the bar */
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 60px;
+      right: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.35));
+      animation: shimmer 1.2s linear infinite;
+    }
+
+    @keyframes shimmer {
+      from { transform: translateX(-60px); }
+      to   { transform: translateX(60px); }
+    }
+
+    .progress-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .66rem;
+      color: var(--dim);
+      margin-top: .5rem;
+      letter-spacing: .08em;
+    }
+
+    /* ─── Terminal log ─────────────────────────────────────────── */
+    .terminal {
+      background: #010810;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1.8rem;
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,229,255,.03);
+    }
+
+    .terminal-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+
+    .terminal-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .68rem;
+      color: var(--dim);
+      letter-spacing: .12em;
+      margin-left: .4rem;
+    }
+
+    .terminal-body {
+      height: 240px;
+      overflow-y: auto;
+      padding: .8rem 1rem;
+      scroll-behavior: smooth;
+    }
+
+    .terminal-body::-webkit-scrollbar { width: 4px; }
+    .terminal-body::-webkit-scrollbar-track { background: transparent; }
+    .terminal-body::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+    .log-line {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .75rem;
+      line-height: 1.7;
+      color: #5a8a6a;
+    }
+
+    .log-line.info    { color: #4db8c8; }
+    .log-line.success { color: var(--green); }
+    .log-line.warning { color: var(--amber); }
+    .log-line.error   { color: var(--red); }
+    .log-line.download { color: #9ab8cc; }
+
+    .log-prefix {
+      color: var(--cyan);
+      margin-right: .4rem;
+      opacity: .7;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 8px; height: 1em;
+      background: var(--cyan);
+      vertical-align: text-bottom;
+      animation: blink-cursor .8s step-end infinite;
+    }
+
+    @keyframes blink-cursor {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* ─── Download button ──────────────────────────────────────── */
+    .download-zone {
+      display: flex;
+      justify-content: center;
+      padding: .4rem 0;
+    }
+
+    .btn-download {
+      display: none;
+      align-items: center;
+      gap: .8rem;
+      background: transparent;
+      border: 2px solid var(--green);
+      border-radius: 8px;
+      color: var(--green);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      padding: .9rem 2.8rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background .2s, box-shadow .2s;
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    .btn-download.visible {
+      display: flex;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(0,230,118,.4), 0 0 25px rgba(0,230,118,.2); }
+      50%       { box-shadow: 0 0 20px rgba(0,230,118,.7), 0 0 50px rgba(0,230,118,.35); }
+    }
+
+    .btn-download:hover {
+      background: rgba(0,230,118,.1);
+    }
+
+    .btn-download-icon {
+      font-size: 1.2rem;
+    }
+
+    /* ─── Error banner ─────────────────────────────────────────── */
+    .error-banner {
+      display: none;
+      background: rgba(255,23,68,.08);
+      border: 1px solid rgba(255,23,68,.4);
+      border-radius: 8px;
+      padding: .9rem 1.2rem;
+      color: var(--red);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .78rem;
+      letter-spacing: .06em;
+      margin-bottom: 1.2rem;
+    }
+
+    .error-banner.visible { display: block; }
+
+    /* ─── Corner decorations ───────────────────────────────────── */
+    .corner-decor {
+      position: fixed;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .6rem;
+      color: var(--dim);
+      letter-spacing: .08em;
+      opacity: .5;
+    }
+    .corner-tl { top: .8rem; left: 1rem; }
+    .corner-tr { top: .8rem; right: 1rem; }
+    .corner-bl { bottom: .8rem; left: 1rem; }
+    .corner-br { bottom: .8rem; right: 1rem; }
+
+    /* ─── Slow-fetch warning banner ───────────────────────────── */
+    .slow-warning {
+      display: none;
+      align-items: center;
+      gap: .8rem;
+      background: rgba(255,171,64,.06);
+      border: 1px solid rgba(255,171,64,.35);
+      border-radius: 8px;
+      padding: .75rem 1.1rem;
+      margin-bottom: 1.4rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .72rem;
+      color: var(--amber);
+      letter-spacing: .07em;
+      line-height: 1.55;
+    }
+    .slow-warning.visible { display: flex; }
+
+    .slow-warning-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      animation: spin-slow 4s linear infinite;
+    }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .slow-warning strong {
+      color: #ffc46a;
+      display: block;
+      margin-bottom: .15rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+    }
+
+    /* ─── Misc ─────────────────────────────────────────────────── */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.6rem 0;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ─── Failed files panel ───────────────────────────────────── */
+    .failed-panel {
+      display: none;
+      background: rgba(255,23,68,.05);
+      border: 1px solid rgba(255,23,68,.3);
+      border-radius: 10px;
+      margin-bottom: 1.8rem;
+      overflow: hidden;
+    }
+    .failed-panel.visible { display: block; }
+
+    .failed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .9rem 1.2rem;
+      border-bottom: 1px solid rgba(255,23,68,.2);
+      background: rgba(255,23,68,.04);
+    }
+
+    .failed-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .15em;
+      color: #ff5370;
+    }
+
+    .failed-badge {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: .78rem;
+      font-weight: 700;
+      background: rgba(255,23,68,.15);
+      border: 1px solid rgba(255,23,68,.4);
+      color: #ff5370;
+      padding: .15rem .55rem;
+      border-radius: 3px;
+      letter-spacing: .08em;
+    }
+
+    .failed-list {
+      max-height: 200px;
+      overflow-y: auto;
+      padding: .5rem 0;
+    }
+    .failed-list::-webkit-scrollbar { width: 4px; }
+    .failed-list::-webkit-scrollbar-thumb { background: rgba(255,23,68,.3); border-radius: 2px; }
+
+    .failed-item {
+      display: flex;
+      align-items: baseline;
+      gap: .8rem;
+      padding: .35rem 1.2rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .7rem;
+      line-height: 1.5;
+      border-bottom: 1px solid rgba(255,23,68,.07);
+    }
+    .failed-item:last-child { border-bottom: none; }
+
+    .failed-fname {
+      color: #ff8a9a;
+      flex-shrink: 0;
+      min-width: 160px;
+    }
+    .failed-err {
+      color: rgba(255,83,112,.55);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .failed-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding: .8rem 1.2rem;
+      border-top: 1px solid rgba(255,23,68,.15);
+    }
+
+    .btn-retry {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: transparent;
+      border: 2px solid var(--amber);
+      border-radius: 6px;
+      color: var(--amber);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      padding: .6rem 1.4rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background .2s, box-shadow .2s;
+    }
+    .btn-retry:hover:not(:disabled) {
+      background: rgba(255,171,64,.1);
+      box-shadow: 0 0 14px rgba(255,171,64,.4);
+    }
+    .btn-retry:disabled { opacity: .4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <!-- Corner decorations -->
+  <span class="corner-decor corner-tl">SYS::MEDIA-HARVESTER</span>
+  <span class="corner-decor corner-tr" id="clock">00:00:00</span>
+  <span class="corner-decor corner-bl">v1.0.0 // STABLE</span>
+  <span class="corner-decor corner-br">ENDPOINT::ICLOUD-SHARED</span>
+
+  <div class="wrapper">
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <div class="logo-icon">◈</div>
+        <div class="logo-text">
+          <h1>iCloud Media Harvester</h1>
+          <p>SHARED ALBUM DOWNLOADER // NEURAL-LINK PROTOCOL</p>
+        </div>
+      </div>
+      <div class="header-badge" id="sys-status">● ONLINE</div>
+    </header>
+
+    <!-- Error banner -->
+    <div class="error-banner" id="error-banner"></div>
+
+    <!-- Input section -->
+    <div class="input-section">
+      <span class="input-label">▸ TARGET ALBUM URL</span>
+      <div class="input-row">
+        <input
+          type="text"
+          class="url-input"
+          id="url-input"
+          placeholder="https://www.icloud.com/photos/#YourShareToken"
+          spellcheck="false"
+          autocomplete="off"
+        />
+        <button class="btn-start" id="btn-start" onclick="startDownload()">
+          INITIATE
+        </button>
+      </div>
+      <p class="input-hint">◦ Accepts the full iCloud shared album URL (the # link) or just the token</p>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="stats-grid">
+      <div class="stat-card" data-type="photos">
+        <div class="stat-label">PHOTOS</div>
+        <div class="stat-value" id="stat-photos">—</div>
+      </div>
+      <div class="stat-card" data-type="videos">
+        <div class="stat-label">VIDEOS</div>
+        <div class="stat-value" id="stat-videos">—</div>
+      </div>
+      <div class="stat-card" data-type="size">
+        <div class="stat-label">ZIP SIZE</div>
+        <div class="stat-value" id="stat-size">—</div>
+      </div>
+      <div class="stat-card" data-type="status">
+        <div class="stat-label">STATUS</div>
+        <div class="stat-value" id="stat-status">IDLE</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="progress-title">▸ SYNC PROGRESS</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <p class="progress-sub" id="progress-sub">Waiting for target URL …</p>
+    </div>
+
+    <!-- Slow-fetch warning -->
+    <div class="slow-warning" id="slow-warning">
+      <span class="slow-warning-icon">◌</span>
+      <span>
+        <strong>⏳ CONTACTING iCLOUD — THIS CAN TAKE UP TO A FEW MINUTES</strong>
+        Apple's shared-stream endpoint is slow to respond on the first request.
+        Timeout is set to 10 minutes. Please wait — do not close this tab.
+      </span>
+    </div>
+
+    <!-- Terminal log -->
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot dot-red"></div>
+        <div class="terminal-dot dot-yellow"></div>
+        <div class="terminal-dot dot-green"></div>
+        <span class="terminal-title">SYSTEM LOG // LIVE FEED</span>
+      </div>
+      <div class="terminal-body" id="terminal-body">
+        <div class="log-line info"><span class="log-prefix">›</span> System ready. Paste an iCloud shared album URL above and press INITIATE.</div>
+        <div class="log-line"><span class="cursor"></span></div>
+      </div>
+    </div>
+
+    <!-- Download button -->
+    <div class="download-zone">
+      <a class="btn-download" id="btn-download" href="#" download>
+        <span class="btn-download-icon">⬇</span>
+        DOWNLOAD ZIP ARCHIVE
+      </a>
+    </div>
+
+    <!-- Failed files panel -->
+    <div class="failed-panel" id="failed-panel">
+      <div class="failed-header">
+        <span class="failed-title">▸ FAILED FILES</span>
+        <span class="failed-badge" id="failed-badge">0</span>
+      </div>
+      <div class="failed-list" id="failed-list"></div>
+      <div class="failed-footer">
+        <button class="btn-retry" id="btn-retry" onclick="retryFailed()">
+          ↺ &nbsp;RETRY FAILED FILES
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Clock ──────────────────────────────────────────────────────
+    function tick() {
+      const now = new Date();
+      document.getElementById('clock').textContent =
+        now.toTimeString().slice(0, 8);
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    // ── State ──────────────────────────────────────────────────────
+    let currentEvtSource = null;
+    let currentJobId = null;
+
+    // ── DOM refs ───────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const urlInput    = $('url-input');
+    const btnStart    = $('btn-start');
+    const btnDownload = $('btn-download');
+    const errorBanner = $('error-banner');
+    const slowWarning = $('slow-warning');
+    const failedPanel = $('failed-panel');
+    const failedBadge = $('failed-badge');
+    const failedList  = $('failed-list');
+    const btnRetry    = $('btn-retry');
+    const termBody    = $('terminal-body');
+    const progressFill= $('progress-fill');
+    const progressPct = $('progress-pct');
+    const progressSub = $('progress-sub');
+
+    // ── Stats helpers ──────────────────────────────────────────────
+    function setStats({ photos, videos, size, status }) {
+      if (photos !== undefined) $('stat-photos').textContent = photos;
+      if (videos !== undefined) $('stat-videos').textContent = videos;
+      if (size   !== undefined) $('stat-size').textContent   = size;
+      if (status !== undefined) $('stat-status').textContent = status;
+    }
+
+    function setProgress(n, total) {
+      const pct = total > 0 ? Math.round((n / total) * 100) : 0;
+      progressFill.style.width = pct + '%';
+      progressPct.textContent  = pct + '%';
+      progressSub.textContent  = total > 0
+        ? `${n} / ${total} files transferred`
+        : 'Preparing …';
+    }
+
+    // ── Terminal helpers ───────────────────────────────────────────
+    function classForMsg(msg) {
+      if (/FATAL|ERROR|⚠/.test(msg)) return 'error';
+      if (/Complete|Done|ready|ZIP/.test(msg)) return 'success';
+      if (/Resolving|Fetching|Starting|download/i.test(msg)) return 'download';
+      if (/Found|Album|Resolved/.test(msg)) return 'success';
+      if (/Warning|skipped/i.test(msg)) return 'warning';
+      return 'info';
+    }
+
+    function appendLog(msg) {
+      // Remove trailing cursor line if present
+      const cursor = termBody.querySelector('.cursor');
+      if (cursor) cursor.closest('.log-line')?.remove();
+
+      const line = document.createElement('div');
+      line.className = 'log-line ' + classForMsg(msg);
+      line.innerHTML = `<span class="log-prefix">›</span> ${escHtml(msg)}`;
+      termBody.appendChild(line);
+
+      // Re-add cursor
+      const cur = document.createElement('div');
+      cur.className = 'log-line';
+      cur.innerHTML = '<span class="cursor"></span>';
+      termBody.appendChild(cur);
+
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function clearLog() {
+      termBody.innerHTML = '<div class="log-line"><span class="cursor"></span></div>';
+    }
+
+    function showError(msg) {
+      errorBanner.textContent = '⚠  ' + msg;
+      errorBanner.classList.add('visible');
+    }
+
+    function hideError() {
+      errorBanner.classList.remove('visible');
+    }
+
+    // ── formatBytes ───────────────────────────────────────────────
+    function fmtBytes(bytes) {
+      if (!bytes) return '—';
+      if (bytes < 1024)       return bytes + ' B';
+      if (bytes < 1048576)    return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+      return (bytes / 1073741824).toFixed(2) + ' GB';
+    }
+
+    // ── Status label map ──────────────────────────────────────────
+    const STATUS_LABEL = {
+      starting:    'INIT',
+      fetching:    'FETCHING',
+      downloading: 'SYNCING',
+      done:        'COMPLETE',
+      error:       'ERROR',
+    };
+
+    // ── Main flow ─────────────────────────────────────────────────
+    async function startDownload() {
+      const url = urlInput.value.trim();
+      if (!url) {
+        showError('Please enter an iCloud shared album URL.');
+        return;
+      }
+
+      hideError();
+      btnStart.disabled = true;
+      btnDownload.classList.remove('visible');
+      slowWarning.classList.remove('visible');
+      failedPanel.classList.remove('visible');
+      failedList.innerHTML = '';
+      failedBadge.textContent = '0';
+      clearLog();
+      setStats({ photos: '…', videos: '…', size: '—', status: 'INIT' });
+      setProgress(0, 0);
+
+      // Close any existing SSE
+      if (currentEvtSource) {
+        currentEvtSource.close();
+        currentEvtSource = null;
+      }
+
+      appendLog('Dispatching request to local server …');
+
+      let res, data;
+      try {
+        res  = await fetch('/api/start', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ url }),
+        });
+        data = await res.json();
+      } catch (e) {
+        btnStart.disabled = false;
+        showError('Network error: ' + e.message);
+        return;
+      }
+
+      if (!res.ok || data.error) {
+        btnStart.disabled = false;
+        showError(data.error || 'Unknown server error');
+        return;
+      }
+
+      currentJobId = data.job_id;
+      appendLog('Job ID: ' + currentJobId.slice(0, 8) + '…');
+      listenProgress(currentJobId);
+    }
+
+    function listenProgress(jobId) {
+      const es = new EventSource('/api/progress/' + jobId);
+      currentEvtSource = es;
+
+      es.onmessage = (evt) => {
+        let d;
+        try { d = JSON.parse(evt.data); } catch { return; }
+
+        if (d.error) {
+          showError(d.error);
+          es.close();
+          btnStart.disabled = false;
+          setStats({ status: 'ERROR' });
+          return;
+        }
+
+        // New log lines
+        (d.logs || []).forEach(appendLog);
+
+        // Show slow-fetch warning only while iCloud endpoint is being contacted
+        if (d.status === 'fetching') {
+          slowWarning.classList.add('visible');
+        } else {
+          slowWarning.classList.remove('visible');
+        }
+
+        // Stats
+        const label = STATUS_LABEL[d.status] || d.status.toUpperCase();
+        setStats({
+          status: label,
+          photos: d.photo_count > 0 ? d.photo_count : (d.status === 'starting' ? '…' : '—'),
+          videos: d.video_count > 0 ? d.video_count : (d.status === 'starting' ? '…' : '—'),
+          size:   d.zip_size    > 0 ? fmtBytes(d.zip_size) : '—',
+        });
+
+        if (d.total > 0) setProgress(d.progress, d.total);
+
+        // Live failed count badge
+        if (d.failed_count > 0) {
+          failedBadge.textContent = d.failed_count;
+          failedPanel.classList.add('visible');
+        }
+
+        if (d.status === 'done') {
+          es.close();
+          btnStart.disabled = false;
+          const href = '/api/download/' + jobId;
+          btnDownload.href = href;
+          btnDownload.classList.add('visible');
+          appendLog('ZIP archive ready for download ✓');
+          setProgress(d.total, d.total);
+          // Populate failed list with full detail
+          if (d.failed_count > 0) loadFailedList(jobId);
+        }
+
+        if (d.status === 'error') {
+          es.close();
+          btnStart.disabled = false;
+          slowWarning.classList.remove('visible');
+          showError(d.error || 'Job failed — check the log above.');
+          setStats({ status: 'ERROR' });
+        }
+      };
+
+      es.onerror = () => {
+        // SSE closed normally after done/error — no action needed
+        es.close();
+      };
+    }
+
+    // ── Failed files ───────────────────────────────────────────────
+    async function loadFailedList(jobId) {
+      try {
+        const res  = await fetch('/api/failed/' + jobId);
+        const data = await res.json();
+        const items = data.failed || [];
+        failedList.innerHTML = '';
+        items.forEach(f => {
+          const row = document.createElement('div');
+          row.className = 'failed-item';
+          const err = f.error.length > 80 ? f.error.slice(0, 80) + '…' : f.error;
+          row.innerHTML =
+            `<span class="failed-fname">${escHtml(f.filename)}</span>` +
+            `<span class="failed-err">${escHtml(err)}</span>`;
+          failedList.appendChild(row);
+        });
+        failedBadge.textContent = items.length;
+        // Store job id on retry button for retryFailed()
+        btnRetry.dataset.sourceJob = jobId;
+        btnRetry.disabled = false;
+      } catch {}
+    }
+
+    async function retryFailed() {
+      const sourceJob = btnRetry.dataset.sourceJob;
+      if (!sourceJob) return;
+
+      btnRetry.disabled = true;
+      hideError();
+      failedPanel.classList.remove('visible');
+      failedList.innerHTML = '';
+      btnDownload.classList.remove('visible');
+      clearLog();
+      setStats({ photos: '…', videos: '…', size: '—', status: 'INIT' });
+      setProgress(0, 0);
+
+      if (currentEvtSource) { currentEvtSource.close(); currentEvtSource = null; }
+
+      let res, data;
+      try {
+        res  = await fetch('/api/retry/' + sourceJob, { method: 'POST' });
+        data = await res.json();
+      } catch (e) {
+        btnRetry.disabled = false;
+        showError('Network error during retry: ' + e.message);
+        return;
+      }
+      if (!res.ok || data.error) {
+        btnRetry.disabled = false;
+        showError(data.error || 'Retry failed');
+        return;
+      }
+
+      currentJobId = data.job_id;
+      appendLog('Retry job started — ID: ' + currentJobId.slice(0, 8) + '…');
+      listenProgress(currentJobId);
+    }
+
+    // Allow Enter key to trigger download
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') startDownload();
+    });
+  </script>
+</body>
+</html>
