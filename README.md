@@ -4,7 +4,6 @@
 
 ![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
 ---
@@ -12,19 +11,10 @@
 ## Screenshots
 
 ### Dashboard — Idle
-![Dashboard idle state showing the URL input and stats cards](https://placehold.co/900x500/03060f/00e5ff?text=Dashboard+%E2%80%94+Idle+State&font=mono)
-
-### Dashboard — Fetching Album
-![Amber slow-connection warning banner while contacting Apple's endpoint](https://placehold.co/900x500/03060f/ffab40?text=Dashboard+%E2%80%94+Fetching+%2F+Slow-Connection+Warning&font=mono)
+![Dashboard idle state](docs/screenshot-idle.png)
 
 ### Dashboard — Downloading (8 parallel workers)
-![Live progress bar and terminal log showing concurrent file downloads](https://placehold.co/900x500/03060f/2979ff?text=Dashboard+%E2%80%94+Downloading+%288+Parallel+Workers%29&font=mono)
-
-### Dashboard — Complete with Failed Files
-![Green download button alongside the red failed-files panel with retry option](https://placehold.co/900x500/03060f/00e676?text=Dashboard+%E2%80%94+Complete+%2B+Failed+Files+Panel&font=mono)
-
-### Dashboard — Retry Failed
-![Retry job in progress after clicking the Retry Failed Files button](https://placehold.co/900x500/03060f/ffab40?text=Dashboard+%E2%80%94+Retrying+Failed+Files&font=mono)
+![Dashboard actively downloading with live progress bar and terminal log](docs/screenshot-downloading.png)
 
 ---
 
@@ -96,6 +86,7 @@ icloud-downloader/
 ├── app.py               # Flask backend — iCloud API, concurrent downloader, SSE, ZIP
 ├── requirements.txt     # flask, requests
 ├── .gitignore
+├── docs/                # Screenshots
 └── templates/
     └── index.html       # Self-contained futuristic dashboard (no build step)
 ```
@@ -184,9 +175,3 @@ All tunables are constants at the top of `app.py`:
 - **URL expiry** — Apple's asset URLs expire after ~1 hour. If a full download + retry cycle takes longer, re-run from the start to get fresh URLs.
 - **Single-process** — the in-memory job store is not shared across workers. Run with `python app.py`, not a multi-process WSGI server.
 - **Public albums only** — works only with publicly shared iCloud albums (the `#token` share links). Does not authenticate with Apple ID credentials.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE) for details.
