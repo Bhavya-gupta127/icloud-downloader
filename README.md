@@ -112,7 +112,7 @@ icloud-downloader/
 ### 1 — Clone
 
 ```bash
-git clone https://github.com/your-username/icloud-downloader.git
+git clone https://github.com/Bhavya-gupta127/icloud-downloader.git
 cd icloud-downloader
 ```
 
